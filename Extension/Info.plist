@@ -50,9 +50,9 @@
 					</array>
 					<key>type</key>
 					<string>aumu</string>
-					<!-- 0x00010000 = version 1.0.0; bump on every build you load in a host. -->
+					<!-- Set by the PONGPING_AU_VERSION build setting (scripts/install.sh raises it on every build). -->
 					<key>version</key>
-					<integer>65536</integer>
+					<integer>PONGPING_AU_VERSION</integer>
 				</dict>
 			</array>
 		</dict>

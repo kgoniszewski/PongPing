@@ -66,6 +66,16 @@ jobs:
         run: |
           APP=DerivedData/Build/Products/Debug/PongPing.app
           "$APP/Contents/MacOS/PongPing" --selftest
+      - name: Install script (same command as on the Mac mini)
+        run: |
+          scripts/install.sh --test
+          V=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:AudioComponents:0:version" \
+            /Applications/PongPing.app/Contents/PlugIns/PongPingExtension.appex/Contents/Info.plist)
+          echo "installed plugin version: $V"
+          test "$V" -gt 65536
+      - name: auval (informational)
+        continue-on-error: true
+        run: auval -v aumu Pnpg Pgpg | tail -20
       - name: Registry diagnostic (informational)
         continue-on-error: true
         run: |

@@ -13,6 +13,10 @@ options:
 settings:
   base:
     PONGPING_BUNDLE_PREFIX: com.pongping
+    # Audio Unit version (0x00010000 = 1.0.0). Hosts rescan a plugin only when it rises.
+    PONGPING_AU_VERSION: "65536"
+    # 1 = ask the host for MIDI 2.0 (Universal MIDI Packets).
+    PONGPING_REQUEST_MIDI2: "0"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     ARCHS: arm64
@@ -46,6 +50,7 @@ targets:
         DEFINES_MODULE: YES
         APPLICATION_EXTENSION_API_ONLY: YES
         HEADER_SEARCH_PATHS: $(SRCROOT)/Core/include
+        GCC_PREPROCESSOR_DEFINITIONS: "$(inherited) PONGPING_REQUEST_MIDI2=$(PONGPING_REQUEST_MIDI2)"
         SKIP_INSTALL: YES
         INSTALL_PATH: "@rpath"
         LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks @loader_path/Frameworks"
@@ -83,6 +88,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(PONGPING_BUNDLE_PREFIX).PongPing.PongPingExtension
         PRODUCT_NAME: PongPingExtension
         INFOPLIST_FILE: Extension/Info.plist
+        INFOPLIST_PREPROCESS: YES
+        INFOPLIST_PREPROCESSOR_DEFINITIONS: PONGPING_AU_VERSION=$(PONGPING_AU_VERSION)
         CODE_SIGN_ENTITLEMENTS: Extension/PongPingExtension.entitlements
         APPLICATION_EXTENSION_API_ONLY: YES
         SKIP_INSTALL: YES
