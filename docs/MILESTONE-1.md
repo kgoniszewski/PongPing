@@ -44,6 +44,10 @@ The app window should say "Loaded in-process"; clicking the keys plays sines
 and the probe panel fills in. This confirms the audio unit works before
 GarageBand is involved.
 
+Audio unit tests: scheme **PongPingKit** → *Test* (⌘U). They load the plugin
+in-process, render offline, and check pitch, note-off, sustain, the Gain
+parameter and the probe report.
+
 Core tests (optional, also run in CI):
 
 ```sh

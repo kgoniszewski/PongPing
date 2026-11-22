@@ -10,7 +10,7 @@ jobs:
     name: Core tests (Linux, sanitizers)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Configure
         run: cmake -S Core -B build -G Ninja -DPONGPING_SANITIZE=ON
       - name: Build
@@ -22,7 +22,7 @@ jobs:
     name: Core tests + Xcode build (macOS)
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Toolchain
         run: |
           xcodebuild -version
