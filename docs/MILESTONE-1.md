@@ -56,6 +56,18 @@ cmake -S Core -B Core/build && cmake --build Core/build && ctest --test-dir Core
 
 ## Install for GarageBand
 
+The quickest path is the script, which does everything below (build inside
+`./build` regardless of Xcode's Locations settings, raise the plugin version,
+self-test, install, register, `auval`):
+
+```sh
+scripts/install.sh --test        # ad-hoc signed
+scripts/install.sh --team ABC123 # or signed with your Apple ID team
+scripts/install.sh --midi2       # probe step I
+```
+
+Manual steps, for reference:
+
 1. *Product → Archive* is not needed. Copy the built app to `/Applications`:
    *Product → Show Build Folder in Finder* → `Products/Debug/PongPing.app`.
 2. Launch `/Applications/PongPing.app` once and quit it. This registers the

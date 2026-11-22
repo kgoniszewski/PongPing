@@ -100,7 +100,7 @@ sleep 2
 echo "==> Registration"
 pluginkit -m -v -p com.apple.AudioUnit-UI | grep -i pongping || echo "    (not listed by pluginkit yet)"
 if auval -v aumu Pnpg Pgpg > "$BUILD/auval.log" 2>&1; then
-    echo "    auval: $(tail -1 "$BUILD/auval.log")"
+    echo "    auval: $(grep -E "AU VALIDATION" "$BUILD/auval.log" || tail -1 "$BUILD/auval.log")"
 else
     echo "    auval FAILED — see $BUILD/auval.log:"
     grep -i -E "error|fail|cannot|not found" "$BUILD/auval.log" | head -10
