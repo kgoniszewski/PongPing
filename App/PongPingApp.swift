@@ -6,6 +6,10 @@ import SwiftUI
 struct PongPingApp: App {
     @StateObject private var host = AudioHost()
 
+    init() {
+        SelfTest.runIfRequested()
+    }
+
     var body: some Scene {
         WindowGroup("PongPing") {
             HostView(host: host)

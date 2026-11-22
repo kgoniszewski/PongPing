@@ -36,12 +36,15 @@ jobs:
         run: |
           brew install xcodegen
           xcodegen generate
-      - name: Build app, framework and extension (unsigned)
+      # Same signing as the local install instructions: ad-hoc, sandboxed,
+      # no hardened runtime.
+      - name: Build app, framework and extension (ad-hoc signed)
         run: |
           set -o pipefail
           xcodebuild -project PongPing.xcodeproj -scheme PongPing -configuration Debug \
             -destination 'platform=macOS,arch=arm64' -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO build | tee build.log | grep -E "error:|warning:|BUILD" || true
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= ENABLE_HARDENED_RUNTIME=NO \
+            build | tee build.log | grep -E "error:|warning:|BUILD" || true
           grep -q "BUILD SUCCEEDED" build.log
       - name: Audio unit tests (in-process offline render)
         run: |
@@ -58,3 +61,13 @@ jobs:
           test -d "$APP/Contents/PlugIns/PongPingExtension.appex"
           plutil -p "$APP/Contents/PlugIns/PongPingExtension.appex/Contents/Info.plist"
           otool -L "$APP/Contents/PlugIns/PongPingExtension.appex/Contents/MacOS/PongPingExtension"
+          codesign -d --entitlements - "$APP"
+      - name: App self-test (sandboxed, in-process hosting path)
+        run: |
+          APP=DerivedData/Build/Products/Debug/PongPing.app
+          "$APP/Contents/MacOS/PongPing" --selftest
+      - name: Registry diagnostic (informational)
+        continue-on-error: true
+        run: |
+          APP=DerivedData/Build/Products/Debug/PongPing.app
+          "$APP/Contents/MacOS/PongPing" --selftest-registry
