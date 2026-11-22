@@ -1,0 +1,101 @@
+# XcodeGen spec. Generate the Xcode project with:
+#   brew install xcodegen && xcodegen generate
+# The .xcodeproj is generated, not committed.
+name: PongPing
+
+options:
+  bundleIdPrefix: com.pongping
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    PONGPING_BUNDLE_PREFIX: com.pongping
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ARCHS: arm64
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    CLANG_CXX_LANGUAGE_STANDARD: c++2b
+    CLANG_ENABLE_OBJC_ARC: YES
+    GCC_WARN_FOUR_CHARACTER_CONSTANTS: NO
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    # Set your team ID here or in Xcode (Signing & Capabilities).
+    DEVELOPMENT_TEAM: ""
+    DEAD_CODE_STRIPPING: YES
+
+targets:
+  PongPingKit:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Kit/Public
+        headerVisibility: public
+      - path: Kit/Sources
+      - path: Core/src
+      - path: Core/include
+        headerVisibility: project
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(PONGPING_BUNDLE_PREFIX).PongPingKit
+        PRODUCT_NAME: PongPingKit
+        GENERATE_INFOPLIST_FILE: YES
+        DEFINES_MODULE: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        HEADER_SEARCH_PATHS: $(SRCROOT)/Core/include
+        SKIP_INSTALL: YES
+        INSTALL_PATH: "@rpath"
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks @loader_path/Frameworks"
+    dependencies:
+      - sdk: AudioToolbox.framework
+      - sdk: AVFoundation.framework
+      - sdk: CoreAudioKit.framework
+      - sdk: CoreMIDI.framework
+
+  PongPingExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Extension
+        excludes:
+          - "*.plist"
+          - "*.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(PONGPING_BUNDLE_PREFIX).PongPing.PongPingExtension
+        PRODUCT_NAME: PongPingExtension
+        INFOPLIST_FILE: Extension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Extension/PongPingExtension.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+        # Frameworks are embedded once, in the app; the extension finds them there.
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks @executable_path/../../../../Frameworks"
+    dependencies:
+      - target: PongPingKit
+        embed: false
+
+  PongPing:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+        excludes:
+          - "*.plist"
+          - "*.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(PONGPING_BUNDLE_PREFIX).PongPing
+        PRODUCT_NAME: PongPing
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/PongPing.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
+    dependencies:
+      - target: PongPingKit
+        embed: true
+      - target: PongPingExtension
+        embed: true
+    scheme:
+      testTargets: []

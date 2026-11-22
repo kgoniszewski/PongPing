@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  core-linux:
+    name: Core tests (Linux, sanitizers)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S Core -B build -G Ninja -DPONGPING_SANITIZE=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  macos:
+    name: Core tests + Xcode build (macOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          clang++ --version
+      - name: Core tests (Apple Clang)
+        run: |
+          cmake -S Core -B build -DPONGPING_SANITIZE=ON
+          cmake --build build
+          ctest --test-dir build --output-on-failure
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Build app, framework and extension (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project PongPing.xcodeproj -scheme PongPing -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO build | tee build.log | grep -E "error:|warning:|BUILD" || true
+          grep -q "BUILD SUCCEEDED" build.log
+      - name: Check bundle layout
+        run: |
+          APP=DerivedData/Build/Products/Debug/PongPing.app
+          test -d "$APP/Contents/Frameworks/PongPingKit.framework"
+          test -d "$APP/Contents/PlugIns/PongPingExtension.appex"
+          plutil -p "$APP/Contents/PlugIns/PongPingExtension.appex/Contents/Info.plist"
+          otool -L "$APP/Contents/PlugIns/PongPingExtension.appex/Contents/MacOS/PongPingExtension"
