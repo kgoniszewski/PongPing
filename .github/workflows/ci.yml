@@ -43,6 +43,14 @@ jobs:
             -destination 'platform=macOS,arch=arm64' -derivedDataPath DerivedData \
             CODE_SIGNING_ALLOWED=NO build | tee build.log | grep -E "error:|warning:|BUILD" || true
           grep -q "BUILD SUCCEEDED" build.log
+      - name: Audio unit tests (in-process offline render)
+        run: |
+          set -o pipefail
+          xcodebuild -project PongPing.xcodeproj -scheme PongPingKit -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' -derivedDataPath DerivedData \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= \
+            test | tee test.log | grep -E "error:|Test Case|Executed|TEST" || true
+          grep -q "TEST SUCCEEDED" test.log
       - name: Check bundle layout
         run: |
           APP=DerivedData/Build/Products/Debug/PongPing.app

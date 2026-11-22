@@ -54,6 +54,21 @@ targets:
       - sdk: AVFoundation.framework
       - sdk: CoreAudioKit.framework
       - sdk: CoreMIDI.framework
+    scheme:
+      testTargets:
+        - PongPingKitTests
+
+  PongPingKitTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Kit/Tests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(PONGPING_BUNDLE_PREFIX).PongPingKitTests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: PongPingKit
 
   PongPingExtension:
     type: app-extension
