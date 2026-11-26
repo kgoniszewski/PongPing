@@ -1,0 +1,11 @@
+{
+  "name": "rozkroj-blach",
+  "version": "1.0.0",
+  "description": "Nesting (optymalizacja rozkroju) detali DXF/DWG na arkuszach blachy – aplikacja przeglądarkowa",
+  "private": true,
+  "license": "GPL-3.0",
+  "scripts": {
+    "test": "node test/run-tests.js",
+    "start": "python3 -m http.server 8000"
+  }
+}

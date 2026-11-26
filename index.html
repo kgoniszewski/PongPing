@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rozkrój Blach</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Optymalizacja rozkroju (nesting) detali z plików DXF/DWG na arkuszach blachy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="1.5" y="5.5" width="29" height="21" rx="1.5" class="bm-sheet"/>
+      <path d="M5 9h9v5H9v9H5z" class="bm-part"/>
+      <circle cx="21" cy="14" r="4.5" class="bm-part"/>
+      <path d="M16 23l9-0 0-4.5z" class="bm-part"/>
+    </svg>
+    <div>
+      <h1>Rozkrój Blach</h1>
+      <p class="tagline">Nesting detali z DXF / DWG na arkuszach</p>
+    </div>
+  </div>
+  <div class="topbar-stats" id="topStats" aria-live="polite"></div>
+</header>
+
+<div class="layout">
+  <!-- ============================== PANEL USTAWIEŃ ============================== -->
+  <aside class="panel" aria-label="Ustawienia rozkroju">
+
+    <section class="step" aria-labelledby="h-parts">
+      <div class="step-head">
+        <span class="step-no">1</span>
+        <h2 id="h-parts">Detale</h2>
+        <span class="step-meta" id="partsMeta"></span>
+      </div>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upuść pliki lub foldery DXF/DWG">
+        <p class="dz-title">Upuść tu pliki lub foldery <b>DXF / DWG</b></p>
+        <div class="dz-actions">
+          <label class="btn btn-sm" for="fileInput">Wybierz pliki</label>
+          <label class="btn btn-sm" for="dirInput">Wybierz folder</label>
+        </div>
+        <input type="file" id="fileInput" accept=".dxf,.dwg,.DXF,.DWG" multiple hidden>
+        <input type="file" id="dirInput" webkitdirectory directory multiple hidden>
+      </div>
+
+      <div class="quick-add">
+        <button class="btn btn-ghost btn-sm" id="addRectBtn" type="button">+ Prostokąt</button>
+        <button class="btn btn-ghost btn-sm" id="addCircleBtn" type="button">+ Krążek</button>
+        <button class="btn btn-ghost btn-sm" id="samplesBtn" type="button">Przykładowe detale</button>
+        <button class="btn btn-ghost btn-sm btn-danger" id="clearPartsBtn" type="button">Wyczyść</button>
+      </div>
+
+      <form class="inline-form" id="rectForm" hidden>
+        <label>Szer. <input id="rectW" type="number" min="1" step="any" value="200"></label>
+        <label>Wys. <input id="rectH" type="number" min="1" step="any" value="100"></label>
+        <label>Szt. <input id="rectQ" type="number" min="1" step="1" value="10"></label>
+        <button class="btn btn-sm" type="submit">Dodaj</button>
+      </form>
+      <form class="inline-form" id="circleForm" hidden>
+        <label>Ø zewn. <input id="circD" type="number" min="1" step="any" value="100"></label>
+        <label>Ø otworu <input id="circd" type="number" min="0" step="any" value="0"></label>
+        <label>Szt. <input id="circQ" type="number" min="1" step="1" value="10"></label>
+        <button class="btn btn-sm" type="submit">Dodaj</button>
+      </form>
+
+      <details class="sub">
+        <summary>Opcje importu</summary>
+        <div class="grid2">
+          <label class="field">Jednostki rysunku
+            <select id="impUnits">
+              <option value="auto">Automatycznie ($INSUNITS)</option>
+              <option value="mm">milimetry</option>
+              <option value="cm">centymetry</option>
+              <option value="m">metry</option>
+              <option value="in">cale</option>
+            </select>
+          </label>
+          <label class="field">Dokładność łuków [mm]
+            <input id="impTol" type="number" min="0.005" step="0.01" value="0.05">
+          </label>
+          <label class="field wide">Pomiń warstwy (oddziel przecinkami)
+            <input id="impSkip" type="text" placeholder="np. WYMIARY, RAMKA, OPISY">
+          </label>
+        </div>
+      </details>
+
+      <div class="import-log" id="importLog" aria-live="polite"></div>
+
+      <div class="parts-bulk" id="partsBulk">
+        <span>Ilość dla wszystkich:</span>
+        <input id="bulkQty" type="number" min="0" step="1" value="1" aria-label="Ilość dla wszystkich detali">
+        <button class="btn btn-ghost btn-sm" id="bulkQtyBtn" type="button">Ustaw</button>
+      </div>
+      <ul class="parts" id="partsList"></ul>
+    </section>
+
+    <section class="step" aria-labelledby="h-sheets">
+      <div class="step-head">
+        <span class="step-no">2</span>
+        <h2 id="h-sheets">Arkusze blachy</h2>
+      </div>
+      <p class="hint">Kolejność = priorytet użycia. Puste pole „szt.” oznacza brak limitu.</p>
+      <div class="sheets-head"><span>Dł. X [mm]</span><span>Szer. Y [mm]</span><span>Szt.</span><span></span></div>
+      <ul class="sheets" id="sheetsList"></ul>
+      <div class="presets">
+        <button class="btn btn-ghost btn-sm" id="addSheetBtn" type="button">+ Arkusz</button>
+        <span class="preset-label">Formaty:</span>
+        <button class="chip" type="button" data-sheet="2000x1000">2000×1000</button>
+        <button class="chip" type="button" data-sheet="2500x1250">2500×1250</button>
+        <button class="chip" type="button" data-sheet="3000x1500">3000×1500</button>
+        <button class="chip" type="button" data-sheet="4000x2000">4000×2000</button>
+      </div>
+      <div class="grid2 material">
+        <label class="field">Materiał
+          <select id="matSel">
+            <option value="7.85">Stal czarna / S235 (7,85)</option>
+            <option value="7.93">Stal nierdzewna (7,93)</option>
+            <option value="2.70">Aluminium (2,70)</option>
+            <option value="8.96">Miedź (8,96)</option>
+            <option value="8.50">Mosiądz (8,50)</option>
+          </select>
+        </label>
+        <label class="field">Grubość [mm]
+          <input id="thick" type="number" min="0" step="0.1" value="2">
+        </label>
+      </div>
+    </section>
+
+    <section class="step" aria-labelledby="h-params">
+      <div class="step-head">
+        <span class="step-no">3</span>
+        <h2 id="h-params">Parametry rozkroju</h2>
+      </div>
+      <div class="grid2">
+        <label class="field">Odstęp między detalami [mm]
+          <input id="pSpacing" type="number" min="0" step="0.5" value="5">
+        </label>
+        <label class="field">Margines od krawędzi [mm]
+          <input id="pMargin" type="number" min="0" step="0.5" value="10">
+        </label>
+        <label class="field">Obroty detali
+          <select id="pRot">
+            <option value="0">bez obrotu</option>
+            <option value="180">0° / 180°</option>
+            <option value="90" selected>co 90°</option>
+            <option value="45">co 45°</option>
+            <option value="30">co 30°</option>
+            <option value="15">co 15°</option>
+          </select>
+        </label>
+        <label class="field">Układanie
+          <select id="pStrategy">
+            <option value="x" selected>wzdłuż X</option>
+            <option value="y">wzdłuż Y</option>
+            <option value="area">zwarta grupa</option>
+          </select>
+        </label>
+        <label class="field">Czas optymalizacji [s]
+          <input id="pTime" type="number" min="1" max="3600" step="1" value="30">
+        </label>
+        <label class="field">Wątki obliczeniowe
+          <input id="pThreads" type="number" min="1" max="32" step="1">
+        </label>
+      </div>
+      <p class="hint">„Wzdłuż X/Y” zostawia resztkę blachy w jednym pasie, który łatwo odciąć i wykorzystać ponownie.</p>
+      <label class="check"><input id="pHoles" type="checkbox" checked> Wkładaj małe detale w otwory większych</label>
+      <details class="sub">
+        <summary>Zaawansowane</summary>
+        <div class="grid2">
+          <label class="field">Uproszczenie obrysu [mm]
+            <input id="pSimplify" type="number" min="0.01" step="0.05" value="0.25">
+          </label>
+        </div>
+        <p class="hint">Obrysy są upraszczane tylko „na zewnątrz”, więc detale nigdy nie nachodzą na siebie; większa wartość = szybciej, ale nieco luźniej.</p>
+      </details>
+    </section>
+
+    <div class="run-bar">
+      <button class="btn btn-primary" id="runBtn" type="button">Rozmieść detale</button>
+      <button class="btn" id="stopBtn" type="button" hidden>Zakończ i zachowaj najlepszy</button>
+    </div>
+  </aside>
+
+  <!-- ============================== WYNIKI ============================== -->
+  <main class="results" id="results" aria-label="Wynik rozkroju">
+    <div class="summary" id="summary"></div>
+
+    <div class="progress" id="progress" hidden>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText"></div>
+    </div>
+
+    <div class="toolbar" id="toolbar" hidden>
+      <button class="btn btn-sm" id="dxfAllBtn" type="button">DXF – wszystkie arkusze</button>
+      <button class="btn btn-sm" id="csvBtn" type="button">Zestawienie CSV</button>
+      <label class="check check-sm"><input id="dxfLabels" type="checkbox"> nazwy detali w DXF</label>
+    </div>
+
+    <div class="alert" id="alert" hidden></div>
+    <div class="sheet-list" id="sheetList"></div>
+    <div class="bom" id="bom"></div>
+  </main>
+</div>
+
+<dialog class="zoom" id="zoomDlg">
+  <div class="zoom-head">
+    <span id="zoomTitle"></span>
+    <button class="btn btn-sm" id="zoomClose" type="button">Zamknij</button>
+  </div>
+  <div class="zoom-body" id="zoomBody"></div>
+</dialog>
+
+<script src="js/vendor/clipper.js"></script>
+<script src="js/cadparse.js"></script>
+<script src="js/geometry.js"></script>
+<script src="js/nestcore.js"></script>
+<script src="js/optimizer.js"></script>
+<script src="js/dxfwrite.js"></script>
+<script src="js/samples.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
